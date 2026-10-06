@@ -1,0 +1,22 @@
+# n8n workflow templates for Google Flights, Google Trends and app reviews (Apify)
+
+Import-ready [n8n](https://n8n.io) workflows that run AutomationNation's Apify Actors on a schedule and send the results to Slack or Google Sheets.
+
+| Workflow | Apify Actor |
+|---|---|
+| [New 1-2 star App Store reviews to Slack](app-store-bad-reviews-to-slack.json) | [app-store-reviews-scraper](https://apify.com/automationnation/app-store-reviews-scraper) |
+| [Daily Google Flights price alert to Slack](daily-flight-price-alert.json) | [google-flights-scraper](https://apify.com/automationnation/google-flights-scraper) |
+| [Weekly Google Trends report to Google Sheets](weekly-google-trends-to-sheets.json) | [google-trends-scraper](https://apify.com/automationnation/google-trends-scraper) |
+
+## Set up
+
+1. Create a [free Apify account](https://console.apify.com/sign-up) and copy your API token from [Settings → API & Integrations](https://console.apify.com/settings/integrations).
+2. In n8n, add a **Header Auth** credential: name `Authorization`, value `Bearer YOUR_APIFY_TOKEN`.
+3. Import a workflow (Workflows → Import from file), pick the credential in its HTTP Request node, and edit the search (route, keywords or app).
+4. Connect Slack or Google Sheets, then activate the workflow.
+
+Each run calls the Actor through Apify's `run-sync-get-dataset-items` endpoint and is billed per result on your Apify account (flights $0.20 per 1,000, keyword reports $1 per 1,000, reviews $0.08 per 1,000). Apify's free plan includes monthly credit.
+
+More: [all AutomationNation Actors and guides](https://retracn.github.io/automationnation-actors/) · [MCP server for AI agents](https://github.com/retracn/automationnation-mcp)
+
+MIT licensed.
