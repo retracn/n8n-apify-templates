@@ -1,0 +1,143 @@
+{
+ "name": "New Google Jobs postings to Slack (Apify)",
+ "nodes": [
+  {
+   "parameters": {
+    "content": "## Daily job alert from Google Jobs\n1. Create a free Apify account and copy your API token (console.apify.com/settings/integrations).\n2. Add a **Header Auth** credential: name `Authorization`, value `Bearer YOUR_TOKEN`.\n3. Set the job searches, location and country in **Search Google Jobs**.\n4. Connect Slack and pick a channel.\n\nWith `onlyNewJobs` the Actor remembers jobs it returned for 120 days, so each run posts only new postings. Cost: $2 per 1,000 jobs + $0.03 per search; a daily check that finds 15 new jobs is about $0.06.",
+    "height": 280,
+    "width": 440
+   },
+   "name": "How to set up",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    -80,
+    -280
+   ]
+  },
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "days",
+       "triggerAtHour": 8
+      }
+     ]
+    }
+   },
+   "name": "Schedule",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "https://api.apify.com/v2/acts/automationnation~google-jobs-scraper/run-sync-get-dataset-items",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpHeaderAuth",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "{\n  \"queries\": [\n    \"python developer\"\n  ],\n  \"location\": \"United States\",\n  \"country\": \"us\",\n  \"datePosted\": \"3days\",\n  \"remoteOnly\": true,\n  \"maxJobsPerQuery\": 50,\n  \"onlyNewJobs\": true\n}",
+    "options": {
+     "timeout": 300000
+    }
+   },
+   "name": "Search Google Jobs",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    220,
+    100
+   ],
+   "credentials": {
+    "httpHeaderAuth": {
+     "id": "",
+     "name": "Apify API token (Header Auth: Authorization = Bearer <token>)"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "jsCode": "// Only jobs not returned in earlier runs come back.\nconst rows = $input.all().map((i) => i.json).filter((j) => j.title);\nif (!rows.length) return [];\nconst lines = rows.slice(0, 20).map((j) => `• <${j.applyUrl || j.jobUrl}|${j.title}> at ${j.companyName || '?'}, ${j.location || ''}${j.salaryText ? ` · ${j.salaryText}` : ''}`);\nreturn [{ json: { message: `🆕 ${rows.length} new job${rows.length === 1 ? '' : 's'}:\\n${lines.join('\\n')}` } }];"
+   },
+   "name": "Format new jobs",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    440,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "select": "channel",
+    "channelId": {
+     "__rl": true,
+     "value": "#jobs",
+     "mode": "name"
+    },
+    "text": "={{ $json.message }}",
+    "otherOptions": {}
+   },
+   "name": "Post to Slack",
+   "type": "n8n-nodes-base.slack",
+   "typeVersion": 2.2,
+   "position": [
+    660,
+    100
+   ],
+   "credentials": {
+    "slackApi": {
+     "id": "",
+     "name": "Slack"
+    }
+   }
+  }
+ ],
+ "connections": {
+  "Schedule": {
+   "main": [
+    [
+     {
+      "node": "Search Google Jobs",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Search Google Jobs": {
+   "main": [
+    [
+     {
+      "node": "Format new jobs",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Format new jobs": {
+   "main": [
+    [
+     {
+      "node": "Post to Slack",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": []
+}

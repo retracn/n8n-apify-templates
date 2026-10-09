@@ -1,0 +1,143 @@
+{
+ "name": "Google Flights fare drops to Slack (Apify)",
+ "nodes": [
+  {
+   "parameters": {
+    "content": "## Flight fare-drop alert\n1. Create a free Apify account and copy your API token (console.apify.com/settings/integrations).\n2. Add a **Header Auth** credential: name `Authorization`, value `Bearer YOUR_TOKEN`.\n3. Edit the route, dates and optional `maxPrice` in **Search Google Flights**.\n4. Connect Slack and pick a channel.\n\nWith `onlyPriceDrops` the Actor itself remembers the cheapest fare: the first run posts the current fares, later runs post only when the cheapest fare falls. Cost: $0.20 per 1,000 flights saved; a day with no drop saves nothing.",
+    "height": 280,
+    "width": 440
+   },
+   "name": "How to set up",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    -80,
+    -280
+   ]
+  },
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "days",
+       "triggerAtHour": 8
+      }
+     ]
+    }
+   },
+   "name": "Schedule",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "https://api.apify.com/v2/acts/automationnation~google-flights-scraper/run-sync-get-dataset-items",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpHeaderAuth",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "{\n  \"origin\": \"JFK\",\n  \"destination\": \"LHR\",\n  \"departureDate\": \"2026-12-18\",\n  \"returnDate\": \"2027-01-03\",\n  \"currency\": \"USD\",\n  \"maxPrice\": 900,\n  \"onlyPriceDrops\": true,\n  \"monitorName\": \"n8n-slack\"\n}",
+    "options": {
+     "timeout": 300000
+    }
+   },
+   "name": "Search Google Flights",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    220,
+    100
+   ],
+   "credentials": {
+    "httpHeaderAuth": {
+     "id": "",
+     "name": "Apify API token (Header Auth: Authorization = Bearer <token>)"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "jsCode": "// The Actor returns rows only on the first check or when the cheapest fare dropped.\nconst rows = $input.all().map((i) => i.json).filter((f) => typeof f.price === 'number').sort((a, b) => a.price - b.price);\nif (!rows.length) return [];\nconst c = rows[0];\nconst was = c.previousCheapestPrice != null ? ` (was ${c.previousCheapestPrice})` : ' (first check)';\nconst lines = rows.slice(0, 5).map((f) => `• ${f.currency} ${f.price}: ${f.airlines?.join?.(', ') || f.airlines || ''}, ${f.stops === 0 ? 'nonstop' : `${f.stops} stop${f.stops > 1 ? 's' : ''}`}, ${f.duration || ''}`);\nreturn [{ json: { message: `✈️ ${c.route}: cheapest ${c.currency} ${c.price}${was}\\n${lines.join('\\n')}\\n<${c.googleFlightsUrl}|Open in Google Flights>` } }];"
+   },
+   "name": "Format the drop",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    440,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "select": "channel",
+    "channelId": {
+     "__rl": true,
+     "value": "#travel",
+     "mode": "name"
+    },
+    "text": "={{ $json.message }}",
+    "otherOptions": {}
+   },
+   "name": "Post to Slack",
+   "type": "n8n-nodes-base.slack",
+   "typeVersion": 2.2,
+   "position": [
+    660,
+    100
+   ],
+   "credentials": {
+    "slackApi": {
+     "id": "",
+     "name": "Slack"
+    }
+   }
+  }
+ ],
+ "connections": {
+  "Schedule": {
+   "main": [
+    [
+     {
+      "node": "Search Google Flights",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Search Google Flights": {
+   "main": [
+    [
+     {
+      "node": "Format the drop",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Format the drop": {
+   "main": [
+    [
+     {
+      "node": "Post to Slack",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": []
+}
