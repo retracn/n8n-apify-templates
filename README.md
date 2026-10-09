@@ -1,4 +1,4 @@
-# n8n workflow templates for Google News alerts, Google Shopping price drops, Google Flights, Google Trends and app reviews (Apify)
+# n8n workflow templates for Google News alerts, Google Shopping, Flights and Hotels price drops, Google Jobs alerts, Google Trends and app reviews (Apify)
 
 Import-ready [n8n](https://n8n.io) workflows that run AutomationNation's Apify Actors on a schedule and send the results to Slack or Google Sheets.
 
@@ -20,7 +20,7 @@ Import-ready [n8n](https://n8n.io) workflows that run AutomationNation's Apify A
 3. Import a workflow (Workflows → Import from file), pick the credential in its HTTP Request node, and edit the search (route, keywords or app).
 4. Connect Slack or Google Sheets, then activate the workflow.
 
-Each run calls the Actor through Apify's `run-sync-get-dataset-items` endpoint and is billed per result on your Apify account (flights $0.20 per 1,000, keyword reports $1 per 1,000, reviews $0.08 per 1,000). Apify's free plan includes monthly credit.
+Each run calls the Actor through Apify's `run-sync-get-dataset-items` endpoint and is billed per result on your Apify account (flights $0.20 per 1,000, hotels $1 per 1,000, jobs $2 per 1,000 + $0.03 per search, keyword reports $1 per 1,000, reviews $0.08 per 1,000). Apify's free plan includes monthly credit.
 
 More: [all AutomationNation Actors and guides](https://retracn.github.io/automationnation-actors/) · [MCP server for AI agents](https://github.com/retracn/automationnation-mcp)
 
