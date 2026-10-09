@@ -1,154 +1,177 @@
 {
-  "name": "Weekly Google Trends report to Google Sheets (Apify)",
-  "nodes": [
-    {
-      "parameters": {
-        "content": "## Weekly Google Trends report\n1. Create a free Apify account and copy your API token.\n2. Add a **Header Auth** credential: `Authorization` = `Bearer YOUR_TOKEN`.\n3. Edit the keywords and country in **Get Google Trends**.\n4. Connect Google Sheets and pick a spreadsheet; each week appends one row per keyword.\n\nCost: $1 per 1,000 keyword reports (a weekly 5-keyword report is half a cent).",
-        "height": 260,
-        "width": 420
-      },
-      "name": "How to set up",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        -80,
-        -260
-      ]
-    },
-    {
-      "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "weeks",
-              "triggerAtHour": 7,
-              "triggerAtDay": [
-                1
-              ]
-            }
-          ]
-        }
-      },
-      "name": "Schedule",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
-      "position": [
-        0,
-        100
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.apify.com/v2/acts/automationnation~google-trends-scraper/run-sync-get-dataset-items",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "{\n  \"searchTerms\": [\n    \"chatgpt\",\n    \"claude\",\n    \"gemini\"\n  ],\n  \"compareAll\": true,\n  \"geo\": \"US\",\n  \"timeRange\": \"today 3-m\",\n  \"includeInterestByRegion\": false,\n  \"includeRelatedQueries\": true\n}",
-        "options": {
-          "timeout": 300000
-        }
-      },
-      "name": "Get Google Trends",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        220,
-        100
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "",
-          "name": "Apify API token (Header Auth: Authorization = Bearer <token>)"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "return $input.all()\n  .map((i) => i.json)\n  .filter((r) => r.type === 'keyword-report')\n  .map((r) => ({ json: {\n    week: new Date().toISOString().slice(0, 10),\n    keyword: r.searchTerm,\n    averageInterest: r.averageInterest,\n    latestInterest: r.latestInterest,\n    changePercent: r.changePercent,\n    trend: r.trendDirection,\n    topRisingQuery: (r.risingQueries || [])[0]?.query || '',\n    summary: r.summary,\n  } }));"
-      },
-      "name": "One row per keyword",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        440,
-        100
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "",
-          "mode": "list"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "gid=0",
-          "mode": "list"
-        },
-        "columns": {
-          "mappingMode": "autoMapInputData",
-          "value": {}
-        },
-        "options": {}
-      },
-      "name": "Append to Google Sheets",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
-      "position": [
-        660,
-        100
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "",
-          "name": "Google Sheets"
-        }
-      }
-    }
-  ],
-  "connections": {
-    "Schedule": {
-      "main": [
-        [
-          {
-            "node": "Get Google Trends",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get Google Trends": {
-      "main": [
-        [
-          {
-            "node": "One row per keyword",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "One row per keyword": {
-      "main": [
-        [
-          {
-            "node": "Append to Google Sheets",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    }
+ "name": "Weekly Google Trends report to Google Sheets (Apify)",
+ "nodes": [
+  {
+   "parameters": {
+    "content": "## Log weekly Google Trends interest for keywords to Google Sheets with Apify\n\n**Who it's for:** SEO, content and marketing teams who want a weekly record of how interest in their keywords and competitors moves.\n\n**How it works**\n1. Every week the schedule runs the Google Trends Scraper Actor on Apify for your keywords, compared on one scale.\n2. The Actor returns one report per keyword: average and latest interest, change, trend direction and rising queries.\n3. A Code node turns each report into a row with the week's date.\n4. Google Sheets appends one row per keyword, building a history over time.\n\n*Built on Apify Actors by AutomationNation. You need an Apify account; runs bill per result on it.*",
+    "height": 560,
+    "width": 460,
+    "color": 5
+   },
+   "name": "Overview",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    -600,
+    -320
+   ]
   },
-  "active": false,
-  "settings": {
-    "executionOrder": "v1"
+  {
+   "parameters": {
+    "content": "## Weekly Google Trends report\n1. Create a free Apify account and copy your API token.\n2. Add a **Header Auth** credential: `Authorization` = `Bearer YOUR_TOKEN`.\n3. Edit the keywords and country in **Get Google Trends**.\n4. Connect Google Sheets and pick a spreadsheet; each week appends one row per keyword.\n\nCost: $1 per 1,000 keyword reports (a weekly 5-keyword report is half a cent).",
+    "height": 340,
+    "width": 440
+   },
+   "name": "Setup",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    -80,
+    -320
+   ]
   },
-  "pinData": {},
-  "tags": []
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "weeks",
+       "triggerAtHour": 7,
+       "triggerAtDay": [
+        1
+       ]
+      }
+     ]
+    }
+   },
+   "name": "Schedule",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    100
+   ],
+   "notes": "Runs every morning at 8:00. Change the time or interval here.",
+   "notesInFlow": true
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "https://api.apify.com/v2/acts/automationnation~google-trends-scraper/run-sync-get-dataset-items",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpHeaderAuth",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "{\n  \"searchTerms\": [\n    \"chatgpt\",\n    \"claude\",\n    \"gemini\"\n  ],\n  \"compareAll\": true,\n  \"geo\": \"US\",\n  \"timeRange\": \"today 3-m\",\n  \"includeInterestByRegion\": false,\n  \"includeRelatedQueries\": true\n}",
+    "options": {
+     "timeout": 300000
+    }
+   },
+   "name": "Get Google Trends",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    220,
+    100
+   ],
+   "credentials": {
+    "httpHeaderAuth": {
+     "id": "",
+     "name": "Apify API token (Header Auth: Authorization = Bearer <token>)"
+    }
+   },
+   "notes": "Calls the Apify Actor through run-sync-get-dataset-items and waits for the rows. Returns one keyword report per search term. Uses a Header Auth credential (Authorization: Bearer <Apify token>), never a hard-coded key.",
+   "notesInFlow": true
+  },
+  {
+   "parameters": {
+    "jsCode": "return $input.all()\n  .map((i) => i.json)\n  .filter((r) => r.type === 'keyword-report')\n  .map((r) => ({ json: {\n    week: new Date().toISOString().slice(0, 10),\n    keyword: r.searchTerm,\n    averageInterest: r.averageInterest,\n    latestInterest: r.latestInterest,\n    changePercent: r.changePercent,\n    trend: r.trendDirection,\n    topRisingQuery: (r.risingQueries || [])[0]?.query || '',\n    summary: r.summary,\n  } }));"
+   },
+   "name": "One row per keyword",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    440,
+    100
+   ],
+   "notes": "Maps each keyword report to a spreadsheet row stamped with this week's date.",
+   "notesInFlow": true
+  },
+  {
+   "parameters": {
+    "operation": "append",
+    "documentId": {
+     "__rl": true,
+     "value": "",
+     "mode": "list"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "gid=0",
+     "mode": "list"
+    },
+    "columns": {
+     "mappingMode": "autoMapInputData",
+     "value": {}
+    },
+    "options": {}
+   },
+   "name": "Append to Google Sheets",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    660,
+    100
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets"
+    }
+   },
+   "notes": "Appends one row per item to the spreadsheet you pick.",
+   "notesInFlow": true
+  }
+ ],
+ "connections": {
+  "Schedule": {
+   "main": [
+    [
+     {
+      "node": "Get Google Trends",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Google Trends": {
+   "main": [
+    [
+     {
+      "node": "One row per keyword",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "One row per keyword": {
+   "main": [
+    [
+     {
+      "node": "Append to Google Sheets",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": []
 }

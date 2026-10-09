@@ -3,16 +3,31 @@
  "nodes": [
   {
    "parameters": {
+    "content": "## Monitor Google Shopping prices and send price drops to Slack with Apify\n\n**Who it's for:** E-commerce teams, resellers and deal hunters tracking a product's price across stores.\n\n**How it works**\n1. Every morning the schedule runs the Google Shopping Scraper Actor on Apify for your products with **Only new results** on.\n2. The Actor remembers each store's listing and returns only new listings and price changes, marked `price_down`, `price_up` or `new`, with `previousPrice`.\n3. A Code node keeps only the price drops and formats them with store and link.\n4. Slack gets a message when a store cuts its price.\n\n*Built on Apify Actors by AutomationNation. You need an Apify account; runs bill per result on it.*",
+    "height": 560,
+    "width": 460,
+    "color": 5
+   },
+   "name": "Overview",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    -600,
+    -320
+   ]
+  },
+  {
+   "parameters": {
     "content": "## Google Shopping price-drop alert\n1. Create a free Apify account and copy your API token (console.apify.com/settings/integrations).\n2. Add a **Header Auth** credential: name `Authorization`, value `Bearer YOUR_TOKEN`.\n3. Put the products you watch in **Search Google Shopping** (`queries`, exact model names work best) and set `country`.\n4. Connect Slack and pick a channel.\n\nThe first run records every listing's price; after that you only hear about drops (per store). Cost: $1 per 1,000 products returned, a few cents a month.",
-    "height": 280,
+    "height": 340,
     "width": 440
    },
-   "name": "How to set up",
+   "name": "Setup",
    "type": "n8n-nodes-base.stickyNote",
    "typeVersion": 1,
    "position": [
     -80,
-    -280
+    -320
    ]
   },
   {
@@ -32,7 +47,9 @@
    "position": [
     0,
     100
-   ]
+   ],
+   "notes": "Runs every morning at 8:00. Change the time or interval here.",
+   "notesInFlow": true
   },
   {
    "parameters": {
@@ -59,7 +76,9 @@
      "id": "",
      "name": "Apify API token (Header Auth: Authorization = Bearer <token>)"
     }
-   }
+   },
+   "notes": "Calls the Apify Actor through run-sync-get-dataset-items and waits for the rows. With onlyNew it returns only new listings and price changes per store. Uses a Header Auth credential (Authorization: Bearer <Apify token>), never a hard-coded key.",
+   "notesInFlow": true
   },
   {
    "parameters": {
@@ -71,7 +90,9 @@
    "position": [
     440,
     100
-   ]
+   ],
+   "notes": "Keeps rows with change = price_down and builds one Slack message.",
+   "notesInFlow": true
   },
   {
    "parameters": {
@@ -96,7 +117,9 @@
      "id": "",
      "name": "Slack"
     }
-   }
+   },
+   "notes": "Posts the message to the Slack channel you pick. Change the channel name or swap this node for email, Discord or Telegram.",
+   "notesInFlow": true
   }
  ],
  "connections": {

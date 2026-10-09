@@ -3,16 +3,31 @@
  "nodes": [
   {
    "parameters": {
+    "content": "## Get Google Flights fare-drop alerts in Slack with Apify\n\n**Who it's for:** Travellers, travel agents and anyone watching a route for a trip who wants a message only when the fare actually falls.\n\n**How it works**\n1. Every morning the schedule triggers a Google Flights search for your route and dates through the Google Flights Scraper Actor on Apify, with **Only fare drops** on.\n2. The Actor remembers the cheapest fare for that search. It returns flights only on the first check or when the cheapest fare is lower than last time, each row with `previousCheapestPrice`. An optional `maxPrice` adds a budget threshold.\n3. A Code node formats the cheapest fare, the old price and the top five options with airlines, stops and duration.\n4. Slack gets one message per drop. Days without a drop send nothing.\n\n*Built on Apify Actors by AutomationNation. You need an Apify account; runs bill per result on it.*",
+    "height": 560,
+    "width": 460,
+    "color": 5
+   },
+   "name": "Overview",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    -600,
+    -320
+   ]
+  },
+  {
+   "parameters": {
     "content": "## Flight fare-drop alert\n1. Create a free Apify account and copy your API token (console.apify.com/settings/integrations).\n2. Add a **Header Auth** credential: name `Authorization`, value `Bearer YOUR_TOKEN`.\n3. Edit the route, dates and optional `maxPrice` in **Search Google Flights**.\n4. Connect Slack and pick a channel.\n\nWith `onlyPriceDrops` the Actor itself remembers the cheapest fare: the first run posts the current fares, later runs post only when the cheapest fare falls. Cost: $0.20 per 1,000 flights saved; a day with no drop saves nothing.",
-    "height": 280,
+    "height": 340,
     "width": 440
    },
-   "name": "How to set up",
+   "name": "Setup",
    "type": "n8n-nodes-base.stickyNote",
    "typeVersion": 1,
    "position": [
     -80,
-    -280
+    -320
    ]
   },
   {
@@ -32,7 +47,9 @@
    "position": [
     0,
     100
-   ]
+   ],
+   "notes": "Runs every morning at 8:00. Change the time or interval here.",
+   "notesInFlow": true
   },
   {
    "parameters": {
@@ -59,7 +76,9 @@
      "id": "",
      "name": "Apify API token (Header Auth: Authorization = Bearer <token>)"
     }
-   }
+   },
+   "notes": "Calls the Apify Actor through run-sync-get-dataset-items and waits for the rows. With onlyPriceDrops it returns rows only on the first check or when the cheapest fare dropped. Uses a Header Auth credential (Authorization: Bearer <Apify token>), never a hard-coded key.",
+   "notesInFlow": true
   },
   {
    "parameters": {
@@ -71,7 +90,9 @@
    "position": [
     440,
     100
-   ]
+   ],
+   "notes": "Sorts by price and builds one Slack message: cheapest fare, previous fare and the top 5 flights.",
+   "notesInFlow": true
   },
   {
    "parameters": {
@@ -96,7 +117,9 @@
      "id": "",
      "name": "Slack"
     }
-   }
+   },
+   "notes": "Posts the message to the Slack channel you pick. Change the channel name or swap this node for email, Discord or Telegram.",
+   "notesInFlow": true
   }
  ],
  "connections": {

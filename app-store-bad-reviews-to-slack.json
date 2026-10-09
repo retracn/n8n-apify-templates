@@ -1,143 +1,166 @@
 {
-  "name": "New 1-2 star App Store reviews to Slack (Apify)",
-  "nodes": [
-    {
-      "parameters": {
-        "content": "## Bad app reviews to Slack\n1. Create a free Apify account and copy your API token.\n2. Add a **Header Auth** credential: `Authorization` = `Bearer YOUR_TOKEN`.\n3. Put your App Store app URL or ID in **Get new low-star reviews** (for Google Play, swap the Actor to google-play-reviews-scraper).\n4. Connect Slack. Only reviews posted since the last run are sent.\n\nCost: $0.08 per 1,000 reviews.",
-        "height": 260,
-        "width": 420
-      },
-      "name": "How to set up",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        -80,
-        -260
-      ]
-    },
-    {
-      "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "days",
-              "triggerAtHour": 9
-            }
-          ]
-        }
-      },
-      "name": "Schedule",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
-      "position": [
-        0,
-        100
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.apify.com/v2/acts/automationnation~app-store-reviews-scraper/run-sync-get-dataset-items",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "{\n  \"apps\": [\n    \"324684580\"\n  ],\n  \"countries\": [\n    \"us\"\n  ],\n  \"sort\": \"newest\",\n  \"maxReviewsPerApp\": 100,\n  \"minRating\": 1,\n  \"maxRating\": 2,\n  \"onlyNewReviews\": true\n}",
-        "options": {
-          "timeout": 300000
-        }
-      },
-      "name": "Get new low-star reviews",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        220,
-        100
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "",
-          "name": "Apify API token (Header Auth: Authorization = Bearer <token>)"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "return $input.all().map((i) => i.json).filter((r) => r.text).map((r) => ({ json: {\n  message: `⭐ ${r.rating}/5 on ${r.appName} (${[r.country?.toUpperCase(), r.appVersion && `v${r.appVersion}`].filter(Boolean).join(', ')}): *${r.title || ''}*\\n${(r.text || '').slice(0, 600)}\\n${r.reviewUrl || ''}`,\n} }));"
-      },
-      "name": "Format message",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        440,
-        100
-      ]
-    },
-    {
-      "parameters": {
-        "select": "channel",
-        "channelId": {
-          "__rl": true,
-          "value": "#app-reviews",
-          "mode": "name"
-        },
-        "text": "={{ $json.message }}",
-        "otherOptions": {}
-      },
-      "name": "Post to Slack",
-      "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.2,
-      "position": [
-        660,
-        100
-      ],
-      "credentials": {
-        "slackApi": {
-          "id": "",
-          "name": "Slack"
-        }
-      }
-    }
-  ],
-  "connections": {
-    "Schedule": {
-      "main": [
-        [
-          {
-            "node": "Get new low-star reviews",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get new low-star reviews": {
-      "main": [
-        [
-          {
-            "node": "Format message",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Format message": {
-      "main": [
-        [
-          {
-            "node": "Post to Slack",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    }
+ "name": "New 1-2 star App Store reviews to Slack (Apify)",
+ "nodes": [
+  {
+   "parameters": {
+    "content": "## Send new 1-2 star App Store reviews to Slack with Apify\n\n**Who it's for:** Mobile product, support and community teams who want to see every new negative review the moment it lands.\n\n**How it works**\n1. The schedule runs the App Store Reviews Scraper Actor on Apify for your app with a 1-2 star filter and **Only new reviews** on.\n2. Each run returns only reviews posted since the last run, with rating, title, text, app version and country.\n3. A Code node turns each review into a Slack message.\n4. Nothing is sent when there are no new bad reviews.\n\n*Built on Apify Actors by AutomationNation. You need an Apify account; runs bill per result on it.*",
+    "height": 560,
+    "width": 460,
+    "color": 5
+   },
+   "name": "Overview",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    -600,
+    -320
+   ]
   },
-  "active": false,
-  "settings": {
-    "executionOrder": "v1"
+  {
+   "parameters": {
+    "content": "## Bad app reviews to Slack\n1. Create a free Apify account and copy your API token.\n2. Add a **Header Auth** credential: `Authorization` = `Bearer YOUR_TOKEN`.\n3. Put your App Store app URL or ID in **Get new low-star reviews** (for Google Play, swap the Actor to google-play-reviews-scraper).\n4. Connect Slack. Only reviews posted since the last run are sent.\n\nCost: $0.08 per 1,000 reviews.",
+    "height": 340,
+    "width": 440
+   },
+   "name": "Setup",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    -80,
+    -320
+   ]
   },
-  "pinData": {},
-  "tags": []
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "days",
+       "triggerAtHour": 9
+      }
+     ]
+    }
+   },
+   "name": "Schedule",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    100
+   ],
+   "notes": "Runs every morning at 8:00. Change the time or interval here.",
+   "notesInFlow": true
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "https://api.apify.com/v2/acts/automationnation~app-store-reviews-scraper/run-sync-get-dataset-items",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpHeaderAuth",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "{\n  \"apps\": [\n    \"324684580\"\n  ],\n  \"countries\": [\n    \"us\"\n  ],\n  \"sort\": \"newest\",\n  \"maxReviewsPerApp\": 100,\n  \"minRating\": 1,\n  \"maxRating\": 2,\n  \"onlyNewReviews\": true\n}",
+    "options": {
+     "timeout": 300000
+    }
+   },
+   "name": "Get new low-star reviews",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    220,
+    100
+   ],
+   "credentials": {
+    "httpHeaderAuth": {
+     "id": "",
+     "name": "Apify API token (Header Auth: Authorization = Bearer <token>)"
+    }
+   },
+   "notes": "Calls the Apify Actor through run-sync-get-dataset-items and waits for the rows. With onlyNewReviews and a 1-2 star filter it returns only new negative reviews. Uses a Header Auth credential (Authorization: Bearer <Apify token>), never a hard-coded key.",
+   "notesInFlow": true
+  },
+  {
+   "parameters": {
+    "jsCode": "return $input.all().map((i) => i.json).filter((r) => r.text).map((r) => ({ json: {\n  message: `⭐ ${r.rating}/5 on ${r.appName} (${[r.country?.toUpperCase(), r.appVersion && `v${r.appVersion}`].filter(Boolean).join(', ')}): *${r.title || ''}*\\n${(r.text || '').slice(0, 600)}\\n${r.reviewUrl || ''}`,\n} }));"
+   },
+   "name": "Format message",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    440,
+    100
+   ],
+   "notes": "One Slack message per review: stars, app, country, version, title and text.",
+   "notesInFlow": true
+  },
+  {
+   "parameters": {
+    "select": "channel",
+    "channelId": {
+     "__rl": true,
+     "value": "#app-reviews",
+     "mode": "name"
+    },
+    "text": "={{ $json.message }}",
+    "otherOptions": {}
+   },
+   "name": "Post to Slack",
+   "type": "n8n-nodes-base.slack",
+   "typeVersion": 2.2,
+   "position": [
+    660,
+    100
+   ],
+   "credentials": {
+    "slackApi": {
+     "id": "",
+     "name": "Slack"
+    }
+   },
+   "notes": "Posts the message to the Slack channel you pick. Change the channel name or swap this node for email, Discord or Telegram.",
+   "notesInFlow": true
+  }
+ ],
+ "connections": {
+  "Schedule": {
+   "main": [
+    [
+     {
+      "node": "Get new low-star reviews",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get new low-star reviews": {
+   "main": [
+    [
+     {
+      "node": "Format message",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Format message": {
+   "main": [
+    [
+     {
+      "node": "Post to Slack",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": []
 }

@@ -1,143 +1,166 @@
 {
-  "name": "Daily Google Flights price alert to Slack (Apify)",
-  "nodes": [
-    {
-      "parameters": {
-        "content": "## Daily flight price alert\n1. Create a free Apify account and copy your API token (console.apify.com/settings/integrations).\n2. Add a **Header Auth** credential: name `Authorization`, value `Bearer YOUR_TOKEN`.\n3. Edit the route and date in **Search Google Flights** and the price threshold in **Cheapest under threshold?**.\n4. Connect Slack and pick a channel.\n\nCost: about $0.20 per 1,000 flights on Apify (a daily check is a fraction of a cent).",
-        "height": 260,
-        "width": 420
-      },
-      "name": "How to set up",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        -80,
-        -260
-      ]
-    },
-    {
-      "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "days",
-              "triggerAtHour": 8
-            }
-          ]
-        }
-      },
-      "name": "Schedule",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
-      "position": [
-        0,
-        100
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.apify.com/v2/acts/automationnation~google-flights-scraper/run-sync-get-dataset-items",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "{\n  \"origin\": \"LHR\",\n  \"destination\": \"JFK\",\n  \"departureDate\": \"2026-12-15\",\n  \"returnDate\": \"2026-12-22\",\n  \"adults\": 1,\n  \"currency\": \"GBP\",\n  \"maxFlightsPerSearch\": 20\n}",
-        "options": {
-          "timeout": 300000
-        }
-      },
-      "name": "Search Google Flights",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        220,
-        100
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "",
-          "name": "Apify API token (Header Auth: Authorization = Bearer <token>)"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "// Alert only when the cheapest fare is at or under this price.\nconst THRESHOLD = 450;\nconst flights = $input.all().map((i) => i.json).filter((f) => typeof f.price === 'number');\nif (!flights.length) return [];\nconst c = flights.reduce((a, b) => (b.price < a.price ? b : a));\nif (c.price > THRESHOLD) return [];\nconst stops = c.stops === 0 ? 'nonstop' : `${c.stops} stop${c.stops > 1 ? 's' : ''}`;\nconst date = c.departureDate || String(c.departure || '').slice(0, 10);\nconst dates = c.returnDate ? `${date} to ${c.returnDate} (round trip)` : date;\nreturn [{ json: { message: `✈️ ${c.from} → ${c.to}, ${dates}: ${c.currency} ${c.price} with ${(c.airlines || []).join(', ')} (${stops}, ${c.duration}). ${c.googleFlightsUrl || ''}` } }];"
-      },
-      "name": "Cheapest under threshold?",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        440,
-        100
-      ]
-    },
-    {
-      "parameters": {
-        "select": "channel",
-        "channelId": {
-          "__rl": true,
-          "value": "#travel",
-          "mode": "name"
-        },
-        "text": "={{ $json.message }}",
-        "otherOptions": {}
-      },
-      "name": "Post to Slack",
-      "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.2,
-      "position": [
-        660,
-        100
-      ],
-      "credentials": {
-        "slackApi": {
-          "id": "",
-          "name": "Slack"
-        }
-      }
-    }
-  ],
-  "connections": {
-    "Schedule": {
-      "main": [
-        [
-          {
-            "node": "Search Google Flights",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Search Google Flights": {
-      "main": [
-        [
-          {
-            "node": "Cheapest under threshold?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Cheapest under threshold?": {
-      "main": [
-        [
-          {
-            "node": "Post to Slack",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    }
+ "name": "Daily Google Flights price alert to Slack (Apify)",
+ "nodes": [
+  {
+   "parameters": {
+    "content": "## Get a daily Google Flights price alert under your budget in Slack with Apify\n\n**Who it's for:** Travellers with a target price: get a message on any day the cheapest fare for your route is at or under your budget.\n\n**How it works**\n1. Every morning the schedule runs the Google Flights Scraper Actor on Apify for your route and dates.\n2. A Code node finds the cheapest flight and checks it against your threshold.\n3. If it is at or under the threshold, Slack gets the fare, airline, stops and a Google Flights link.\n\n*Built on Apify Actors by AutomationNation. You need an Apify account; runs bill per result on it.*",
+    "height": 560,
+    "width": 460,
+    "color": 5
+   },
+   "name": "Overview",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    -600,
+    -320
+   ]
   },
-  "active": false,
-  "settings": {
-    "executionOrder": "v1"
+  {
+   "parameters": {
+    "content": "## Daily flight price alert\n1. Create a free Apify account and copy your API token (console.apify.com/settings/integrations).\n2. Add a **Header Auth** credential: name `Authorization`, value `Bearer YOUR_TOKEN`.\n3. Edit the route and date in **Search Google Flights** and the price threshold in **Cheapest under threshold?**.\n4. Connect Slack and pick a channel.\n\nCost: about $0.20 per 1,000 flights on Apify (a daily check is a fraction of a cent).",
+    "height": 340,
+    "width": 440
+   },
+   "name": "Setup",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    -80,
+    -320
+   ]
   },
-  "pinData": {},
-  "tags": []
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "days",
+       "triggerAtHour": 8
+      }
+     ]
+    }
+   },
+   "name": "Schedule",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    100
+   ],
+   "notes": "Runs every morning at 8:00. Change the time or interval here.",
+   "notesInFlow": true
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "https://api.apify.com/v2/acts/automationnation~google-flights-scraper/run-sync-get-dataset-items",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpHeaderAuth",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "{\n  \"origin\": \"LHR\",\n  \"destination\": \"JFK\",\n  \"departureDate\": \"2026-12-15\",\n  \"returnDate\": \"2026-12-22\",\n  \"adults\": 1,\n  \"currency\": \"GBP\",\n  \"maxFlightsPerSearch\": 20\n}",
+    "options": {
+     "timeout": 300000
+    }
+   },
+   "name": "Search Google Flights",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    220,
+    100
+   ],
+   "credentials": {
+    "httpHeaderAuth": {
+     "id": "",
+     "name": "Apify API token (Header Auth: Authorization = Bearer <token>)"
+    }
+   },
+   "notes": "Calls the Apify Actor through run-sync-get-dataset-items and waits for the rows. Returns up to 20 flights for the route and dates. Uses a Header Auth credential (Authorization: Bearer <Apify token>), never a hard-coded key.",
+   "notesInFlow": true
+  },
+  {
+   "parameters": {
+    "jsCode": "// Alert only when the cheapest fare is at or under this price.\nconst THRESHOLD = 450;\nconst flights = $input.all().map((i) => i.json).filter((f) => typeof f.price === 'number');\nif (!flights.length) return [];\nconst c = flights.reduce((a, b) => (b.price < a.price ? b : a));\nif (c.price > THRESHOLD) return [];\nconst stops = c.stops === 0 ? 'nonstop' : `${c.stops} stop${c.stops > 1 ? 's' : ''}`;\nconst date = c.departureDate || String(c.departure || '').slice(0, 10);\nconst dates = c.returnDate ? `${date} to ${c.returnDate} (round trip)` : date;\nreturn [{ json: { message: `✈️ ${c.from} → ${c.to}, ${dates}: ${c.currency} ${c.price} with ${(c.airlines || []).join(', ')} (${stops}, ${c.duration}). ${c.googleFlightsUrl || ''}` } }];"
+   },
+   "name": "Cheapest under threshold?",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    440,
+    100
+   ],
+   "notes": "Finds the cheapest fare and stops unless it is at or under THRESHOLD.",
+   "notesInFlow": true
+  },
+  {
+   "parameters": {
+    "select": "channel",
+    "channelId": {
+     "__rl": true,
+     "value": "#travel",
+     "mode": "name"
+    },
+    "text": "={{ $json.message }}",
+    "otherOptions": {}
+   },
+   "name": "Post to Slack",
+   "type": "n8n-nodes-base.slack",
+   "typeVersion": 2.2,
+   "position": [
+    660,
+    100
+   ],
+   "credentials": {
+    "slackApi": {
+     "id": "",
+     "name": "Slack"
+    }
+   },
+   "notes": "Posts the message to the Slack channel you pick. Change the channel name or swap this node for email, Discord or Telegram.",
+   "notesInFlow": true
+  }
+ ],
+ "connections": {
+  "Schedule": {
+   "main": [
+    [
+     {
+      "node": "Search Google Flights",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Search Google Flights": {
+   "main": [
+    [
+     {
+      "node": "Cheapest under threshold?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Cheapest under threshold?": {
+   "main": [
+    [
+     {
+      "node": "Post to Slack",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": []
 }

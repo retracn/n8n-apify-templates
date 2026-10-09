@@ -3,16 +3,31 @@
  "nodes": [
   {
    "parameters": {
+    "content": "## Send new Google Jobs postings to Slack daily with Apify\n\n**Who it's for:** Job seekers, recruiters and sourcers who want every new posting for a search, from all the boards Google Jobs covers, without checking each board.\n\n**How it works**\n1. Every morning the schedule runs the Google Jobs Scraper Actor on Apify with **Only new jobs** on.\n2. Google Jobs aggregates LinkedIn, Indeed, Glassdoor, company career sites and more. The Actor remembers job IDs per search for 120 days and returns only postings you have not seen, with salary and the employer's own apply link first.\n3. A Code node builds a list of linked job titles with company, location and salary.\n4. Slack gets the new postings; no message when there is nothing new.\n\n*Built on Apify Actors by AutomationNation. You need an Apify account; runs bill per result on it.*",
+    "height": 560,
+    "width": 460,
+    "color": 5
+   },
+   "name": "Overview",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    -600,
+    -320
+   ]
+  },
+  {
+   "parameters": {
     "content": "## Daily job alert from Google Jobs\n1. Create a free Apify account and copy your API token (console.apify.com/settings/integrations).\n2. Add a **Header Auth** credential: name `Authorization`, value `Bearer YOUR_TOKEN`.\n3. Set the job searches, location and country in **Search Google Jobs**.\n4. Connect Slack and pick a channel.\n\nWith `onlyNewJobs` the Actor remembers jobs it returned for 120 days, so each run posts only new postings. Cost: $2 per 1,000 jobs + $0.03 per search; a daily check that finds 15 new jobs is about $0.06.",
-    "height": 280,
+    "height": 340,
     "width": 440
    },
-   "name": "How to set up",
+   "name": "Setup",
    "type": "n8n-nodes-base.stickyNote",
    "typeVersion": 1,
    "position": [
     -80,
-    -280
+    -320
    ]
   },
   {
@@ -32,7 +47,9 @@
    "position": [
     0,
     100
-   ]
+   ],
+   "notes": "Runs every morning at 8:00. Change the time or interval here.",
+   "notesInFlow": true
   },
   {
    "parameters": {
@@ -59,7 +76,9 @@
      "id": "",
      "name": "Apify API token (Header Auth: Authorization = Bearer <token>)"
     }
-   }
+   },
+   "notes": "Calls the Apify Actor through run-sync-get-dataset-items and waits for the rows. With onlyNewJobs it returns only postings not returned for this search before (remembered 120 days). Uses a Header Auth credential (Authorization: Bearer <Apify token>), never a hard-coded key.",
+   "notesInFlow": true
   },
   {
    "parameters": {
@@ -71,7 +90,9 @@
    "position": [
     440,
     100
-   ]
+   ],
+   "notes": "Builds a Slack list of up to 20 new jobs: linked title, company, location and salary.",
+   "notesInFlow": true
   },
   {
    "parameters": {
@@ -96,7 +117,9 @@
      "id": "",
      "name": "Slack"
     }
-   }
+   },
+   "notes": "Posts the message to the Slack channel you pick. Change the channel name or swap this node for email, Discord or Telegram.",
+   "notesInFlow": true
   }
  ],
  "connections": {
